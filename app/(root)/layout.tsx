@@ -1,5 +1,6 @@
 "use client";
 import Navbar from "@/components/layout/navbar";
+import Loader from "@/components/ui/loader";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -12,11 +13,7 @@ const Homelayout = ({
   const { status } = useSession();
 
   if (status === "loading") {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="border-4 border-gray-200 border-t-blue-500 w-10 h-10 rounded-full animate-spin" />
-      </div>
-    );
+    return <Loader />;
   }
 
   if (status === "unauthenticated") {

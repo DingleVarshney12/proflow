@@ -85,7 +85,7 @@ const CreateProject = () => {
           </InputGroup>
         </div>
         <div className="grid gap-3 mt-8">
-          <Button type="submit" disabled={loading || !session}>
+          <Button type="submit" disabled={loading || !session} className="cursor-pointer hover:scale-105">
             {loading ? "Creating..." : "Create Project"}
           </Button>
         </div>

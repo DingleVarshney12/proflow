@@ -30,7 +30,7 @@ const AddTaskDialog = ({
   onTaskAdded,
 }: {
   projectId: string;
-  onTaskAdded: (newTask: any) => void;
+  onTaskAdded: () => void;
 }) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ const AddTaskDialog = ({
     e.preventDefault();
     setLoading(true);
     if (addTaskData.status === "") {
-      toast.error("Select Status")
+      toast.error("Select Status");
     }
     try {
       const res = await fetch(`/api/task`, {
@@ -64,17 +64,17 @@ const AddTaskDialog = ({
       });
 
       if (res.ok) {
-        const data = await res.json();
-        onTaskAdded(data.task);
+        await res.json();
+        onTaskAdded();
         setOpen(false);
         setAddTaskData({ title: "", status: "" });
-        toast.success("Task Added Successfully")
       }
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong")
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
+      toast.success("Task Added Successfully");
     }
   };
 

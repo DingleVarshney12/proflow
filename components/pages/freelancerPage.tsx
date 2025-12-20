@@ -18,10 +18,14 @@ import { Project } from "@/lib/types";
 import EmptyProjectPage from "../layout/emptyProjectPage";
 import DeleteDialog from "../layout/deleteDialog";
 import PaginationComp from "../layout/pagination";
+import { useSession } from "next-auth/react";
+import Loader from "../ui/loader";
 const FreelancerPage: React.FC = () => {
+  const { status } = useSession();
   const { setProjects } = useProjectStore();
   const [myProject, setMyProjects] = useState<Project[]>([]);
   const [projectSummary, setProjectSummary] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [projectPagination, setProjectPagination] = useState<{
     totalCount: number;
     currentPage: number;
@@ -31,8 +35,9 @@ const FreelancerPage: React.FC = () => {
 
   const fetchProjects = async (forcePage?: number) => {
     try {
+      setLoading(true);
       const currentPage = forcePage ?? page;
-      const res = await fetch(`/api/project?page=${page}&limit=10`);
+      const res = await fetch(`/api/project?page=${currentPage}&limit=10`);
       if (!res.ok) return;
 
       const data = await res.json();
@@ -50,12 +55,15 @@ const FreelancerPage: React.FC = () => {
       setProjectSummary(data.summary);
     } catch (error) {
       console.error("Failed to fetch projects", error);
+      toast.error("Failed to fetch projects");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProjects();
-  }, [page, setProjects]);
+  }, [page]);
 
   const summaryMap = useMemo(() => {
     return projectSummary.reduce((acc, item) => {
@@ -89,9 +97,12 @@ const FreelancerPage: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return <Loader text="Fetching Projects" />;
+  }
   return (
     <div className="max-w-10/12 w-full mx-auto py-[5%]">
-      {myProject.length > 0 ? (
+      {status === "authenticated" && myProject.length > 0 ? (
         <>
           <div className="w-full flex justify-end mb-4">
             <Link href={"/project/create"}>

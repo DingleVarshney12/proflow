@@ -20,6 +20,7 @@ import EmptyTaskPage from "@/components/layout/emptyTaskPage";
 import DeleteDialog from "@/components/layout/deleteDialog";
 import NotFound from "@/app/not-found";
 import PaginationComp from "@/components/layout/pagination";
+import Loader from "@/components/ui/loader";
 
 export default function ProjectPage() {
   const { data: session, status } = useSession();
@@ -31,7 +32,7 @@ export default function ProjectPage() {
   const [mytasks, setMyTasks] = useState<Task[]>([]);
   const [specificProject, setSpecificProjects] = useState<Project | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const projectFromStore = useProjectStore((state) =>
     typeof id === "string" ? state.getProjectById(id) : undefined
   );
@@ -69,15 +70,23 @@ export default function ProjectPage() {
   }, [id, status]);
 
   const fetchTasks = async () => {
-    if (id) {
-      const res = await fetch(
-        `/api/task?projectId=${id}&page=${page}&limit=10`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setMyTasks(data.tasks);
-        setTaskPagination(data.pagination);
+    try {
+      setLoading(true);
+      if (id) {
+        const res = await fetch(
+          `/api/task?projectId=${id}&page=${page}&limit=10`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setMyTasks(data.tasks);
+          setTaskPagination(data.pagination);
+        }
       }
+    } catch (error) {
+      console.log(error);
+      toast.error("An error occurred while fetching tasks.");
+    } finally {
+      setLoading(false);
     }
   };
   useEffect(() => {
@@ -86,6 +95,7 @@ export default function ProjectPage() {
 
   const handleDeleteTask = async (taskId: string) => {
     try {
+      setLoading(true);
       const res = await fetch(`/api/task`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -95,17 +105,19 @@ export default function ProjectPage() {
       if (res.ok) {
         toast.success("Task Deleted Successfully");
         await fetchTasks();
-        setMyTasks((prev) => prev.filter((t) => t._id !== taskId));
       } else {
         toast.error("Unable to delete task");
       }
     } catch (error) {
       toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
-  const handleTaskAdded = async (newTask: Task) => {
+  const handleTaskAdded = async () => {
     await fetchTasks();
   };
+
   if (status === "loading" || loading) {
     return <div className="flex justify-center py-20">Loading project...</div>;
   }
@@ -114,22 +126,21 @@ export default function ProjectPage() {
   if (!displayProject) {
     return <NotFound />;
   }
-
   return (
     <article className="w-full max-w-10/12 mx-auto py-[5%] px-2">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 flex-wrap">
         <div>
           <h2 className="text-3xl font-bold mb-2">{displayProject.title}</h2>
           <p className="text-muted-foreground font-medium mb-4">
             Client ID: {displayProject.clientId}
           </p>
-        </div>{" "}
+        </div>
         {me === "Freelancer" && id && (
           <AddTaskDialog projectId={id} onTaskAdded={handleTaskAdded} />
         )}
       </div>
 
-      {mytasks.length > 0 ? (
+      {status === "authenticated" && mytasks.length > 0 ? (
         <div className="border rounded-lg">
           <Table>
             <TableCaption>A list of your project tasks.</TableCaption>

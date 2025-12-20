@@ -15,10 +15,10 @@ import { Trash } from "lucide-react";
 
 interface DeleteDialogProps {
   handleDeleteTask: (id: string) => void;
-    id: string;
-    page: "Task" | "Project";
+  id: string;
+  page: "Task" | "Project";
 }
-const DeleteDialog = ({ handleDeleteTask, id ,page}: DeleteDialogProps) => {
+const DeleteDialog = ({ handleDeleteTask, id, page }: DeleteDialogProps) => {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -44,7 +44,7 @@ const DeleteDialog = ({ handleDeleteTask, id ,page}: DeleteDialogProps) => {
           <Button
             type="submit"
             onClick={() => handleDeleteTask(id)}
-            className="bg-red-500  hover:bg-red-700"
+            variant={"destructive"}
           >
             Delete
           </Button>
