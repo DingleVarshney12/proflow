@@ -4,6 +4,7 @@ import "./globals.css";
 import ClientProvider from "@/components/provider/sessionProvider";
 import { Toaster } from "@/components/ui/sonner";
 import Network from "@/components/pages/network";
+import Footer from "@/components/layout/footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,9 +34,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ClientProvider>
-          <Network/>
-          <main className="min-h-screen w-full overflow-x-hidden">
+          <Network />
+          <main className=" w-full overflow-x-hidden">
             {children}
+            <Footer />
           </main>
           <Toaster />
         </ClientProvider>

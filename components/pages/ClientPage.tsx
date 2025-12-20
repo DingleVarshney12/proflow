@@ -18,7 +18,7 @@ import Loader from "../ui/loader";
 
 const ClientPage = () => {
   const { projects, setProjects } = useProjectStore();
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [projectSummary, setProjectSummary] = useState<any[]>([]);
   const [projectPagination, setProjectPagination] = useState<{
     totalCount: number;
@@ -29,7 +29,7 @@ const ClientPage = () => {
 
   const fetchProjects = async (forcePage?: number) => {
     try {
-      setLoading(true)
+      setLoading(true);
       const currentPage = forcePage ?? page;
 
       const res = await fetch(`/api/project?page=${page}&limit=10`);
@@ -46,11 +46,11 @@ const ClientPage = () => {
       setProjects(data.projects);
       setProjectSummary(data.summary);
       setProjectPagination(data.pagination);
-      setLoading(false)
+      setLoading(false);
     } catch (error) {
       console.log(error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
   useEffect(() => {
@@ -69,10 +69,10 @@ const ClientPage = () => {
     return "In progress";
   };
   if (loading) {
-  return <Loader text="Fetching Projects"/>
-}
+    return <Loader text="Fetching Projects" />;
+  }
   return (
-    <div className="max-w-10/12 w-full mx-auto py-[5%]">
+    <div className="md:max-w-10/12 px-2 w-full mx-auto py-[5%]">
       {projects.length > 0 ? (
         <>
           <Table>
@@ -114,7 +114,11 @@ const ClientPage = () => {
               })}
             </TableBody>
           </Table>
-          <PaginationComp paginationDetails={projectPagination} page={page} setPage={setPage}/>
+          <PaginationComp
+            paginationDetails={projectPagination}
+            page={page}
+            setPage={setPage}
+          />
         </>
       ) : (
         <EmptyProjectPage />

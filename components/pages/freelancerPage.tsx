@@ -101,7 +101,7 @@ const FreelancerPage: React.FC = () => {
     return <Loader text="Fetching Projects" />;
   }
   return (
-    <div className="max-w-10/12 w-full mx-auto py-[5%]">
+    <div className="md:max-w-10/12 w-full mx-auto py-[5%] px-2">
       {status === "authenticated" && myProject.length > 0 ? (
         <>
           <div className="w-full flex justify-end mb-4">

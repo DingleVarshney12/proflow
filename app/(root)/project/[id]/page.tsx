@@ -20,7 +20,6 @@ import EmptyTaskPage from "@/components/layout/emptyTaskPage";
 import DeleteDialog from "@/components/layout/deleteDialog";
 import NotFound from "@/app/not-found";
 import PaginationComp from "@/components/layout/pagination";
-import Loader from "@/components/ui/loader";
 
 export default function ProjectPage() {
   const { data: session, status } = useSession();
@@ -127,7 +126,7 @@ export default function ProjectPage() {
     return <NotFound />;
   }
   return (
-    <article className="w-full max-w-10/12 mx-auto py-[5%] px-2">
+    <article className="w-full md:max-w-10/12 mx-auto py-[5%] px-2">
       <div className="flex justify-between items-center mb-6 flex-wrap">
         <div>
           <h2 className="text-3xl font-bold mb-2">{displayProject.title}</h2>

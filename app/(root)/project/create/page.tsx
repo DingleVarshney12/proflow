@@ -26,7 +26,7 @@ const CreateProject = () => {
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true)
+    setLoading(true);
     try {
       const res = await fetch(`/api/project`, {
         method: "POST",
@@ -55,7 +55,7 @@ const CreateProject = () => {
     }
   };
   return (
-    <div className="max-w-10/12 w-full mx-auto py-[5%]">
+    <div className="md:max-w-10/12 w-full mx-auto py-[5%] px-2">
       <h2 className="text-2xl font-bold mb-4">Create Project</h2>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-3 mt-4">
@@ -85,7 +85,11 @@ const CreateProject = () => {
           </InputGroup>
         </div>
         <div className="grid gap-3 mt-8">
-          <Button type="submit" disabled={loading || !session} className="cursor-pointer hover:scale-105">
+          <Button
+            type="submit"
+            disabled={loading || !session}
+            className="cursor-pointer hover:scale-105"
+          >
             {loading ? "Creating..." : "Create Project"}
           </Button>
         </div>
