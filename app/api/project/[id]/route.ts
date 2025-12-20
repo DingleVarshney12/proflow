@@ -13,7 +13,7 @@ export async function GET(
     if (!session?.user?.email) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    const id = await params.id;
+    const id = params.id;
 
     await connectDB();
     const project = await Project.findOne({
