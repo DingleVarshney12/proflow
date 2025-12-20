@@ -1,26 +1,35 @@
 "use client";
-import React, { useEffect, useState } from "react";
 
-const Network = () => {
-  const [isOnline, setIsOnline] = useState((navigator as Navigator).onLine);
+import { useEffect, useState } from "react";
+
+const Network: React.FC = () => {
+  const [isOnline, setIsOnline] = useState<boolean>(true);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    if (typeof window === "undefined") return;
 
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    const updateOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+    };
+
+    updateOnlineStatus();
+
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
 
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
     };
   }, []);
 
   if (isOnline) return null;
 
   return (
-    <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center py-2 z-50">
+    <div
+      role="alert"
+      className="fixed top-0 left-0 w-full bg-red-600 text-white text-center py-2 z-50"
+    >
       <p>You are offline. Please check your internet connection.</p>
     </div>
   );
