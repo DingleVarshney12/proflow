@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import {  NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import connectDB from "@/database/mongodb";
 import Project from "@/models/project.model";
@@ -13,16 +13,16 @@ export async function GET(
     if (!session?.user?.email) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    const { id } =await params;
+    const id = await params.id;
 
     await connectDB();
-     const project = await Project.findOne({
-       _id: id,
-       $or: [
-         { freelancerId: session.user.email },
-         { clientId: session.user.email },
-       ],
-     });
+    const project = await Project.findOne({
+      _id: id,
+      $or: [
+        { freelancerId: session.user.email },
+        { clientId: session.user.email },
+      ],
+    });
 
     if (!project) {
       return NextResponse.json(
