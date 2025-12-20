@@ -5,7 +5,7 @@ import connectDB from "@/database/mongodb";
 import Project from "@/models/project.model";
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
