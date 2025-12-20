@@ -2,9 +2,6 @@
 import { useParams } from "next/navigation";
 import { useProjectStore } from "@/store/useProjectStore";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
-
 import {
   Table,
   TableBody,
@@ -19,52 +16,73 @@ import EditTaskDialog from "@/components/layout/editTaskDialog";
 import AddTaskDialog from "@/components/layout/addTaskDialog";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
-import { useTaskStore } from "@/store/useTaskStore";
 import EmptyTaskPage from "@/components/layout/emptyTaskPage";
 import DeleteDialog from "@/components/layout/deleteDialog";
 import NotFound from "@/app/not-found";
+import PaginationComp from "@/components/layout/pagination";
 
 export default function ProjectPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+
   const me = session?.user.role;
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+
   const [mytasks, setMyTasks] = useState<Task[]>([]);
   const [specificProject, setSpecificProjects] = useState<Project | null>(null);
-  const { tasks, setTasks } = useTaskStore();
-
-  const projectFromStore = useProjectStore((state) => state.getProjectById(id));
-
-  const displayProject = projectFromStore || specificProject;
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const projectFromStore = useProjectStore((state) =>
+    typeof id === "string" ? state.getProjectById(id) : undefined
+  );
+  const [taskPagination, setTaskPagination] = useState<{
+    totalCount: number;
+    currentPage: number;
+    totalPages: number;
+  } | null>(null);
 
   useEffect(() => {
-    if (!projectFromStore && id) {
-      const fetchSingleProject = async () => {
-        try {
-          const res = await fetch(`/api/project/${id}`);
-          const data = await res.json();
-          setSpecificProjects(data.project);
-        } catch (err) {
-          console.error("Project fetch failed", err);
+    if (status === "loading") return;
+
+    if (!id) return;
+
+    const fetchSingleProject = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/project/${id}`);
+
+        if (!res.ok) {
+          setSpecificProjects(null);
+          return;
         }
-      };
-      fetchSingleProject();
-    }
-  }, [projectFromStore, id]);
-  useEffect(() => {
+
+        const data = await res.json();
+        setSpecificProjects(data.project);
+      } catch {
+        setSpecificProjects(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSingleProject();
+  }, [id, status]);
+
+  const fetchTasks = async () => {
     if (id) {
-      const fetchTasks = async () => {
-        const res = await fetch(
-          `/api/task?projectId=${id}`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setMyTasks(data.tasks);
-          setTasks(data.tasks);
-        }
-      };
-      fetchTasks();
+      const res = await fetch(
+        `/api/task?projectId=${id}&page=${page}&limit=10`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setMyTasks(data.tasks);
+        setTaskPagination(data.pagination);
+      }
     }
-  }, [id]);
+  };
+  useEffect(() => {
+    fetchTasks();
+  }, [id, page]);
 
   const handleDeleteTask = async (taskId: string) => {
     try {
@@ -76,6 +94,7 @@ export default function ProjectPage() {
 
       if (res.ok) {
         toast.success("Task Deleted Successfully");
+        await fetchTasks();
         setMyTasks((prev) => prev.filter((t) => t._id !== taskId));
       } else {
         toast.error("Unable to delete task");
@@ -84,16 +103,18 @@ export default function ProjectPage() {
       toast.error("Something went wrong");
     }
   };
-  const handleTaskAdded = (newTask: Task) => {
-    setMyTasks((prev) => [...prev, newTask]);
+  const handleTaskAdded = async (newTask: Task) => {
+    await fetchTasks();
   };
-  if (!displayProject) {
-    return (
-      <div className="flex justify-center py-20">
-        <NotFound/>
-      </div>
-    );
+  if (status === "loading" || loading) {
+    return <div className="flex justify-center py-20">Loading project...</div>;
   }
+  const displayProject = specificProject || projectFromStore;
+
+  if (!displayProject) {
+    return <NotFound />;
+  }
+
   return (
     <article className="w-full max-w-10/12 mx-auto py-[5%] px-2">
       <div className="flex justify-between items-center mb-6">
@@ -103,7 +124,7 @@ export default function ProjectPage() {
             Client ID: {displayProject.clientId}
           </p>
         </div>{" "}
-        {me === "Freelancer" && (
+        {me === "Freelancer" && id && (
           <AddTaskDialog projectId={id} onTaskAdded={handleTaskAdded} />
         )}
       </div>
@@ -126,7 +147,7 @@ export default function ProjectPage() {
               {mytasks.map((t, idx) => (
                 <TableRow key={t._id}>
                   <TableCell>
-                    TSK{(idx + 1).toString().padStart(3, "0")}
+                    TSK{((page - 1) * 10 + idx + 1).toString().padStart(3, "0")}
                   </TableCell>
                   <TableCell className="font-medium">{t.title}</TableCell>
                   <TableCell>
@@ -161,19 +182,15 @@ export default function ProjectPage() {
               ))}
             </TableBody>
           </Table>
+          <PaginationComp
+            paginationDetails={taskPagination}
+            setPage={setPage}
+            page={page}
+          />
         </div>
       ) : (
         <EmptyTaskPage />
       )}
     </article>
   );
-}
-{
-  /* <Button
-  variant="destructive"
-  size="icon"
-  onClick={() => handleDeleteTask(t._id)}
->
-  <Trash className="h-4 w-4" />
-</Button>; */
 }

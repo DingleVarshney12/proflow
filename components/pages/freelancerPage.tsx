@@ -17,51 +17,59 @@ import { toast } from "sonner";
 import { Project } from "@/lib/types";
 import EmptyProjectPage from "../layout/emptyProjectPage";
 import DeleteDialog from "../layout/deleteDialog";
+import PaginationComp from "../layout/pagination";
 const FreelancerPage: React.FC = () => {
   const { setProjects } = useProjectStore();
   const [myProject, setMyProjects] = useState<Project[]>([]);
   const [projectSummary, setProjectSummary] = useState<any[]>([]);
-  React.useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const res = await fetch(
-          `/api/project`
-        );
-        if (!res.ok) return;
-        const data = await res.json();
+  const [projectPagination, setProjectPagination] = useState<{
+    totalCount: number;
+    currentPage: number;
+    totalPages: number;
+  } | null>(null);
+  const [page, setPage] = useState(1);
 
-        setProjects(data.projects);
-        setMyProjects(data.projects);
-      } catch (error) {
-        console.error("Failed to fetch projects", error);
-      }
-    };
-
-    fetchProjects();
-  }, [setProjects]);
-  useEffect(() => {
-    const fetchSummary = async () => {
-      const res = await fetch(
-        `/api/project/summary`
-      );
+  const fetchProjects = async (forcePage?: number) => {
+    try {
+      const currentPage = forcePage ?? page;
+      const res = await fetch(`/api/project?page=${page}&limit=10`);
       if (!res.ok) return;
+
       const data = await res.json();
-      setProjectSummary(data);
-    };
-    fetchSummary();
-  }, []);
+      if (
+        data.projects.length === 0 &&
+        currentPage > 1 &&
+        data.pagination.totalPages < currentPage
+      ) {
+        setPage(data.pagination.totalPages || 1);
+        return;
+      }
+      setProjects(data.projects);
+      setMyProjects(data.projects);
+      setProjectPagination(data.pagination);
+      setProjectSummary(data.summary);
+    } catch (error) {
+      console.error("Failed to fetch projects", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProjects();
+  }, [page, setProjects]);
 
   const summaryMap = useMemo(() => {
-    return projectSummary.reduce((acc: any, item: any) => {
-      acc[item.projectId.toString()] = item;
+    return projectSummary.reduce((acc, item) => {
+      acc[item.projectId] = item;
       return acc;
     }, {});
   }, [projectSummary]);
+
   const getStatus = (summary: any) => {
     if (!summary || summary.totalTasks === 0) return "Not started";
     if (summary.completedTasks === summary.totalTasks) return "Completed";
     return "In progress";
   };
+
   const handleDeleteProject = async (projectId: string) => {
     try {
       const res = await fetch(`/api/project`, {
@@ -72,7 +80,7 @@ const FreelancerPage: React.FC = () => {
 
       if (res.ok) {
         toast.success("Project Deleted Successfully");
-        setMyProjects((prev) => prev.filter((t) => t._id !== projectId));
+        await fetchProjects();
       } else {
         toast.error("Unable to delete project");
       }
@@ -111,7 +119,8 @@ const FreelancerPage: React.FC = () => {
                 return (
                   <TableRow key={p._id}>
                     <TableCell className="font-medium">
-                      PRO{(idx + 1).toString().padStart(3, "0")}
+                      PRO
+                      {((page - 1) * 10 + idx + 1).toString().padStart(3, "0")}
                     </TableCell>
                     <TableCell>{p.title}</TableCell>
                     <TableCell>{p.clientId}</TableCell>
@@ -125,9 +134,7 @@ const FreelancerPage: React.FC = () => {
                         : "Not started"}
                     </TableCell>
                     <TableCell className="text-right flex space-x-2 justify-end">
-                      <Link
-                        href={`/project/${p._id}`}
-                      >
+                      <Link href={`/project/${p._id}`}>
                         <Button className="cursor-pointer">Open</Button>
                       </Link>
                       <DeleteDialog
@@ -141,6 +148,11 @@ const FreelancerPage: React.FC = () => {
               })}
             </TableBody>
           </Table>
+          <PaginationComp
+            paginationDetails={projectPagination}
+            setPage={setPage}
+            page={page}
+          />
         </>
       ) : (
         <EmptyProjectPage />

@@ -53,6 +53,9 @@ const AddTaskDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    if (addTaskData.status === "") {
+      toast.error("Select Status")
+    }
     try {
       const res = await fetch(`/api/task`, {
         method: "POST",

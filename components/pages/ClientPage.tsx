@@ -13,32 +13,43 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 import { useProjectStore } from "@/store/useProjectStore";
 import EmptyProjectPage from "../layout/emptyProjectPage";
+import PaginationComp from "../layout/pagination";
 
 const ClientPage = () => {
   const { projects, setProjects } = useProjectStore();
   const [projectSummary, setProjectSummary] = useState<any[]>([]);
+  const [projectPagination, setProjectPagination] = useState<{
+    totalCount: number;
+    currentPage: number;
+    totalPages: number;
+  } | null>(null);
+  const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      const res = await fetch(`/api/project`);
+  const fetchProjects = async (forcePage?: number) => {
+    try {
+      const currentPage = forcePage ?? page;
+
+      const res = await fetch(`/api/project?page=${page}&limit=10`);
       if (!res.ok) return;
       const data = await res.json();
+      if (
+        data.projects.length === 0 &&
+        currentPage > 1 &&
+        data.pagination.totalPages < currentPage
+      ) {
+        setPage(data.pagination.totalPages || 1);
+        return;
+      }
       setProjects(data.projects);
-    };
-    fetchProjects();
-  }, [setProjects]);
-
+      setProjectSummary(data.summary);
+      setProjectPagination(data.pagination);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    const fetchSummary = async () => {
-      const res = await fetch(
-        `/api/project/summary`
-      );
-      if (!res.ok) return;
-      const data = await res.json();
-      setProjectSummary(data);
-    };
-    fetchSummary();
-  }, []);
+    fetchProjects();
+  }, [page, setProjects]);
 
   const summaryMap = useMemo(() => {
     return projectSummary.reduce((acc: any, item: any) => {
@@ -73,7 +84,8 @@ const ClientPage = () => {
                 return (
                   <TableRow key={p._id}>
                     <TableCell>
-                      PRO{(idx + 1).toString().padStart(3, "0")}
+                      PRO
+                      {((page - 1) * 10 + idx + 1).toString().padStart(3, "0")}
                     </TableCell>
                     <TableCell>{p.title}</TableCell>
                     <TableCell>{p.freelancerId}</TableCell>
@@ -85,9 +97,7 @@ const ClientPage = () => {
                         : "Not started"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link
-                        href={`/project/${p._id}`}
-                      >
+                      <Link href={`/project/${p._id}`}>
                         <Button>Open</Button>
                       </Link>
                     </TableCell>
@@ -96,9 +106,11 @@ const ClientPage = () => {
               })}
             </TableBody>
           </Table>
-        </> 
-        ): <EmptyProjectPage />
-}
+          <PaginationComp paginationDetails={projectPagination} page={page} setPage={setPage}/>
+        </>
+      ) : (
+        <EmptyProjectPage />
+      )}
     </div>
   );
 };

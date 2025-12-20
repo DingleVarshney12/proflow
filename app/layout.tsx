@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientProvider from "@/components/provider/sessionProvider";
 import { Toaster } from "@/components/ui/sonner";
+import Network from "@/components/pages/network";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ClientProvider>
+          <Network/>
           <main className="min-h-screen w-full overflow-x-hidden">
             {children}
           </main>
