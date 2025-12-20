@@ -13,9 +13,9 @@ export async function GET(
     if (!session?.user?.email) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    const id = params.id;
 
     await connectDB();
+    const id = params.id;
     const project = await Project.findOne({
       _id: id,
       $or: [
