@@ -17,7 +17,6 @@ const Network = () => {
     };
   }, []);
 
-  // Only show the offline banner when the user is offline
   if (isOnline) return null;
 
   return (
